@@ -7,9 +7,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import Optional
 
-import models
-import schemas
-from database import engine, get_db
+from backend import models, schemas
+from backend.database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
 

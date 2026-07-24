@@ -1,8 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from database import Base
-
+from backend.database import Base
 
 class Ticket(Base):
     __tablename__ = "tickets"
