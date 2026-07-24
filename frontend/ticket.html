@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Ticket Details - Support CRM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex">
+
+  <aside class="w-56 bg-white border-r border-gray-200 hidden md:flex flex-col p-5">
+    <h1 class="text-xl font-bold text-indigo-600 mb-8">Support CRM</h1>
+    <nav class="flex flex-col gap-2">
+      <a href="index.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100">Dashboard</a>
+      <a href="create.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100">Create Ticket</a>
+    </nav>
+  </aside>
+
+  <main class="flex-1 p-4 md:p-8 max-w-3xl">
+    <a href="index.html" class="text-sm text-indigo-600 hover:underline">&larr; Back to Dashboard</a>
+
+    <div id="notFound" class="hidden text-center py-20 text-gray-400">
+      Ticket not found.
+    </div>
+
+    <div id="ticketContent" class="hidden">
+      <div class="flex items-center justify-between mt-4 mb-6">
+        <h2 id="ticketId" class="text-2xl font-semibold text-gray-800"></h2>
+        <span id="statusBadge" class="px-3 py-1 rounded-full text-xs font-medium"></span>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h3 class="text-sm font-semibold text-gray-500 mb-3">CUSTOMER INFORMATION</h3>
+        <p class="text-gray-800"><span class="font-medium">Name:</span> <span id="custName"></span></p>
+        <p class="text-gray-800"><span class="font-medium">Email:</span> <span id="custEmail"></span></p>
+
+        <hr class="my-4" />
+
+        <h3 class="text-sm font-semibold text-gray-500 mb-2">SUBJECT</h3>
+        <p id="subjectText" class="text-gray-800 mb-4"></p>
+
+        <h3 class="text-sm font-semibold text-gray-500 mb-2">DESCRIPTION</h3>
+        <p id="descText" class="text-gray-800 mb-4 whitespace-pre-wrap"></p>
+
+        <div class="flex gap-6 text-sm text-gray-500 mt-4">
+          <p>Created: <span id="createdAt"></span></p>
+          <p>Updated: <span id="updatedAt"></span></p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h3 class="text-sm font-semibold text-gray-500 mb-3">UPDATE STATUS</h3>
+        <div class="flex gap-3 items-center">
+          <select id="statusSelect" class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Closed">Closed</option>
+          </select>
+          <button id="updateStatusBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            Update Status
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-sm font-semibold text-gray-500 mb-3">NOTES</h3>
+        <div id="notesList" class="flex flex-col gap-3 mb-4"></div>
+
+        <div class="flex gap-3">
+          <input id="noteInput" type="text" placeholder="Add a note..."
+            class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          <button id="addNoteBtn" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            Add Note
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="confirmDialog" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-80 shadow-xl">
+      <p class="text-gray-800 font-medium mb-4">Are you sure you want to close this ticket?</p>
+      <div class="flex justify-end gap-3">
+        <button id="cancelClose" class="px-4 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-100">Cancel</button>
+        <button id="confirmClose" class="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700">Yes, Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const ticketId = params.get("id");
+    let pendingStatus = null;
+
+    async function loadTicket() {
+      if (!ticketId) {
+        document.getElementById("notFound").classList.remove("hidden");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/${ticketId}`);
+        if (!res.ok) throw new Error("not found");
+        const t = await res.json();
+
+        document.getElementById("ticketContent").classList.remove("hidden");
+        document.getElementById("ticketId").textContent = t.ticket_id;
+
+        const badge = document.getElementById("statusBadge");
+        badge.textContent = t.status;
+        badge.className = `px-3 py-1 rounded-full text-xs font-medium ${statusBadgeClass(t.status)}`;
+
+        document.getElementById("custName").textContent = t.customer_name;
+        document.getElementById("custEmail").textContent = t.customer_email;
+        document.getElementById("subjectText").textContent = t.subject;
+        document.getElementById("descText").textContent = t.description;
+        document.getElementById("createdAt").textContent = formatDate(t.created_at);
+        document.getElementById("updatedAt").textContent = formatDate(t.updated_at);
+        document.getElementById("statusSelect").value = t.status;
+
+        const notesList = document.getElementById("notesList");
+        notesList.innerHTML = "";
+        if (t.notes.length === 0) {
+          notesList.innerHTML = `<p class="text-gray-400 text-sm">No notes yet.</p>`;
+        } else {
+          t.notes.forEach((n) => {
+            const div = document.createElement("div");
+            div.className = "bg-gray-50 rounded-lg p-3 text-sm";
+            div.innerHTML = `<p class="text-gray-800">${n.note_text}</p>
+              <p class="text-gray-400 text-xs mt-1">${formatDate(n.created_at)}</p>`;
+            notesList.appendChild(div);
+          });
+        }
+      } catch (err) {
+        document.getElementById("notFound").classList.remove("hidden");
+      }
+    }
+
+    async function updateTicket(payload) {
+      const res = await fetch(`${API_BASE}/${ticketId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("update failed");
+      return res.json();
+    }
+
+    document.getElementById("updateStatusBtn").addEventListener("click", async () => {
+      const newStatus = document.getElementById("statusSelect").value;
+
+      if (newStatus === "Closed") {
+        pendingStatus = newStatus;
+        document.getElementById("confirmDialog").classList.remove("hidden");
+        return;
+      }
+
+      try {
+        await updateTicket({ status: newStatus });
+        showToast("Status updated");
+        loadTicket();
+      } catch (err) {
+        showToast("Could not update status", true);
+      }
+    });
+
+    document.getElementById("cancelClose").addEventListener("click", () => {
+      document.getElementById("confirmDialog").classList.add("hidden");
+      pendingStatus = null;
+    });
+
+    document.getElementById("confirmClose").addEventListener("click", async () => {
+      document.getElementById("confirmDialog").classList.add("hidden");
+      try {
+        await updateTicket({ status: pendingStatus });
+        showToast("Ticket closed");
+        loadTicket();
+      } catch (err) {
+        showToast("Could not close ticket", true);
+      }
+    });
+
+    document.getElementById("addNoteBtn").addEventListener("click", async () => {
+      const input = document.getElementById("noteInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      try {
+        await updateTicket({ note_text: text });
+        input.value = "";
+        showToast("Note added");
+        loadTicket();
+      } catch (err) {
+        showToast("Could not add note", true);
+      }
+    });
+
+    loadTicket();
+  </script>
+</body>
+</html>

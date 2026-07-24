@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Create Ticket - Support CRM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex">
+
+  <aside class="w-56 bg-white border-r border-gray-200 hidden md:flex flex-col p-5">
+    <h1 class="text-xl font-bold text-indigo-600 mb-8">Support CRM</h1>
+    <nav class="flex flex-col gap-2">
+      <a href="index.html" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100">Dashboard</a>
+      <a href="create.html" class="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-medium">Create Ticket</a>
+    </nav>
+  </aside>
+
+  <main class="flex-1 p-4 md:p-8 max-w-2xl">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Create New Ticket</h2>
+
+    <form id="ticketForm" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Customer Name</label>
+        <input type="text" id="customerName" required
+          class="w-full mt-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-700">Customer Email</label>
+        <input type="email" id="customerEmail" required
+          class="w-full mt-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-700">Subject</label>
+        <input type="text" id="subject" required
+          class="w-full mt-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-700">Description</label>
+        <textarea id="description" rows="4" required
+          class="w-full mt-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium self-start">
+        Create Ticket
+      </button>
+    </form>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    document.getElementById("ticketForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.textContent = "Creating...";
+
+      const payload = {
+        customer_name: document.getElementById("customerName").value.trim(),
+        customer_email: document.getElementById("customerEmail").value.trim(),
+        subject: document.getElementById("subject").value.trim(),
+        description: document.getElementById("description").value.trim(),
+      };
+
+      try {
+        const res = await fetch(API_BASE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) throw new Error("Failed to create ticket");
+
+        const data = await res.json();
+        showToast(`Ticket ${data.ticket_id} created`);
+        setTimeout(() => (window.location.href = `ticket.html?id=${data.ticket_id}`), 800);
+      } catch (err) {
+        showToast("Could not create ticket", true);
+        btn.disabled = false;
+        btn.textContent = "Create Ticket";
+      }
+    });
+  </script>
+</body>
+</html>
