@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import Optional
+from pathlib import Path
 
 from backend import models, schemas
 from backend.database import engine, get_db
@@ -112,4 +113,8 @@ def update_ticket(ticket_id: str, update: schemas.TicketUpdate, db: Session = De
     db.refresh(ticket)
     return ticket
 
-app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+git add .
