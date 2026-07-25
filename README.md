@@ -16,7 +16,7 @@ Support Ticket CRM is a full-stack web application built as part of the Datastra
 
 - **Backend:** FastAPI (Python)
 - **ORM:** SQLAlchemy
-- **Database:** SQLite
+- **Database:** Neon PostgreSQL
 - **Frontend:** HTML + Tailwind CSS (CDN) + Vanilla JavaScript
 
 ## Folder Structure
