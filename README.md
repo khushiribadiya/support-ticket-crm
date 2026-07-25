@@ -86,20 +86,28 @@ support-crm/
 | GET | /api/tickets/{ticket_id} | Get full details of one ticket |
 | PUT | /api/tickets/{ticket_id} | Update status and/or add a note |
 
-## Deployment (Railway.app)
+## Deployment (Render)
 
-1. Push this project to a GitHub repository.
-2. Go to [railway.app](https://railway.app) and create a new project from your GitHub repo.
-3. Railway auto-detects Python. Set the start command to:
-   ```
-   uvicorn backend.main:app --host 0.0.0.0 --port $PORT
-   ```
-   (or `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT` depending on root directory settings)
-4. Add a build command if needed:
-   ```
-   pip install -r requirements.txt
-   ```
-5. Deploy. Railway will give a public URL once the build finishes.
+This project is deployed on Render.
+
+**Live Demo:**
+https://support-ticket-crm-jx9d.onrender.com
+
+### Deployment Steps
+
+1. Push the project to GitHub.
+2. Create a new **Web Service** on Render.
+3. Connect your GitHub repository.
+4. Configure:
+   - **Build Command**
+     ```bash
+     pip install -r requirements.txt
+     ```
+   - **Start Command**
+     ```bash
+     uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+     ```
+5. Deploy the application.
 
 ## Notes
 
